@@ -1,0 +1,33 @@
+server:
+  port: 8080
+
+spring:
+  datasource:
+    url: ${DB_URL:jdbc:mysql://localhost:3306/photo_manager?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Shanghai}
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:zhangppg@22}
+  jpa:
+    hibernate:
+      ddl-auto: none
+    properties:
+      hibernate:
+        globally_quoted_identifiers: true
+  sql:
+    init:
+      mode: always
+  servlet:
+    multipart:
+      max-file-size: 20MB
+      max-request-size: 20MB
+
+app:
+  cors:
+    allowed-origins: http://localhost:8081,http://127.0.0.1:8081
+
+photo:
+  storage:
+    dir: /Users/macmini/data/project/未命名文件夹/backend/data/uploads/photos
+    metadata: data/photos.json
+logging:
+  level:
+    root: DEBUG
