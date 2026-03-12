@@ -1,9 +1,0 @@
-com/example/photomanager/auth/entity/AppUserEntity.class
-com/example/photomanager/storage/service/FileUrlService.class
-com/example/photomanager/storage/service/FileUrlSchemaInitializer.class
-com/example/photomanager/auth/repository/AppUserRepository.class
-com/example/photomanager/model/PhotoUpdateRequest.class
-com/example/photomanager/storage/entity/FileUrlEntity.class
-com/example/photomanager/auth/entity/UserRuleEntity.class
-com/example/photomanager/storage/repository/FileUrlRepository.class
-com/example/photomanager/auth/repository/UserRuleRepository.class
