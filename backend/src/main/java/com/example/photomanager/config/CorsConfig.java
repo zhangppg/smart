@@ -9,7 +9,9 @@ public class CorsConfig implements WebMvcConfigurer {
     @Override
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/api/**")
-                .allowedOriginPatterns("http://192.168.10.102:*", "http://127.0.0.1:*")
+                // Allow LAN access (tablet/phone) without having to hardcode the PC's IP.
+                // We don't use cookies, so allowCredentials is not needed.
+                .allowedOriginPatterns("*")
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                 .allowedHeaders("*");
     }

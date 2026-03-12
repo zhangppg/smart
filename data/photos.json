@@ -68,6 +68,23 @@
   "createdAt" : "2026-03-12T13:56:07.856662Z"
 }, {
   "recordId" : null,
+  "id" : "34172b94-182a-4b42-bebe-fa7a77c7f3d2",
+  "ownerId" : "2",
+  "title" : "4",
+  "category" : "4",
+  "tags" : [ "4" ],
+  "originalFilename" : "IMG_5380.jpeg",
+  "contentType" : "image/jpeg",
+  "size" : 3815785,
+  "storageFilename" : "34172b94-182a-4b42-bebe-fa7a77c7f3d2.jpeg",
+  "fileUrl" : "/Users/macmini/data/project/photos/smart/backend/data/uploads/photos/34172b94-182a-4b42-bebe-fa7a77c7f3d2.jpeg",
+  "sourceContentType" : null,
+  "sourceSize" : 0,
+  "sourceStorageFilename" : null,
+  "sourceFileUrl" : null,
+  "createdAt" : "2026-03-12T15:45:35.149306Z"
+}, {
+  "recordId" : null,
   "id" : "ea99eff6-3a53-4c9f-ae05-4165a4bb319a",
   "ownerId" : "2",
   "title" : "2",

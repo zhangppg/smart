@@ -3,8 +3,23 @@ import axios from 'axios'
 const TOKEN_KEY = 'photo_manager_token'
 const USERNAME_KEY = 'photo_manager_username'
 
+function resolveApiBaseUrl() {
+  const envUrl = process.env.VUE_APP_API_BASE_URL
+  if (envUrl) return envUrl
+
+  // When accessing from another device (tablet/phone), "localhost" would point to that device.
+  // Default to the same host as the frontend, but on backend port 8080.
+  if (typeof window !== 'undefined' && window.location) {
+    const host = window.location.hostname
+    const protocol = window.location.protocol || 'http:'
+    return `${protocol}//${host}:8080`
+  }
+
+  return 'http://localhost:8080'
+}
+
 const api = axios.create({
-  baseURL: process.env.VUE_APP_API_BASE_URL || 'http://localhost:8080'
+  baseURL: resolveApiBaseUrl()
 })
 
 const TOAST_EVENT = 'app-toast'
