@@ -1,5 +1,6 @@
 import Vue from 'vue'
 import Router from 'vue-router'
+import HomeView from '../views/HomeView.vue'
 import LoginView from '../views/LoginView.vue'
 import PhotosView from '../views/PhotosView.vue'
 import { getToken } from '../services/api'
@@ -11,7 +12,8 @@ const router = new Router({
   routes: [
     {
       path: '/',
-      redirect: () => (getToken() ? '/photos' : '/login')
+      name: 'home',
+      component: HomeView
     },
     {
       path: '/login',
@@ -21,7 +23,8 @@ const router = new Router({
     {
       path: '/photos',
       name: 'photos',
-      component: PhotosView
+      component: PhotosView,
+      meta: { requiresAuth: true }
     }
   ]
 })
@@ -29,10 +32,10 @@ const router = new Router({
 router.beforeEach((to, from, next) => {
   const authed = !!getToken()
   if (to.path === '/login' && authed) {
-    next('/photos')
+    next('/')
     return
   }
-  if (to.path !== '/login' && !authed) {
+  if (to.matched.some(r => r.meta && r.meta.requiresAuth) && !authed) {
     next('/login')
     return
   }

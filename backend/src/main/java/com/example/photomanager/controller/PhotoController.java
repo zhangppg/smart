@@ -60,11 +60,15 @@ public class PhotoController {
     @GetMapping("/{id}/download")
     public ResponseEntity<Resource> downloadPhoto(@PathVariable String id) {
         PhotoItem photo = photoService.getPhotoOrThrow(currentUserId(), id);
-        Path path = photoService.getPhotoPath(currentUserId(), id);
+        Path path = photoService.getPhotoDownloadPath(currentUserId(), id);
         Resource resource = new FileSystemResource(path);
 
+        String downloadContentType = photo.getSourceContentType() != null && !photo.getSourceContentType().isBlank()
+                ? photo.getSourceContentType()
+                : photo.getContentType();
+
         return ResponseEntity.ok()
-                .contentType(MediaType.parseMediaType(photo.getContentType()))
+                .contentType(MediaType.parseMediaType(downloadContentType))
                 .header(HttpHeaders.CONTENT_DISPOSITION,
                         "attachment; filename=\"" + photo.getOriginalFilename() + "\"")
                 .body(resource);
@@ -73,7 +77,7 @@ public class PhotoController {
     @GetMapping("/{id}/view")
     public ResponseEntity<Resource> viewPhoto(@PathVariable String id) {
         PhotoItem photo = photoService.getPhotoOrThrow(currentUserId(), id);
-        Path path = photoService.getPhotoPath(currentUserId(), id);
+        Path path = photoService.getPhotoViewPath(currentUserId(), id);
         Resource resource = new FileSystemResource(path);
 
         return ResponseEntity.ok()

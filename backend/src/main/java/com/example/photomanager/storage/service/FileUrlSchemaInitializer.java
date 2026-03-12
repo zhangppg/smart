@@ -22,6 +22,10 @@ public class FileUrlSchemaInitializer implements ApplicationRunner {
         ensureColumn("content_type", "ALTER TABLE file_url ADD COLUMN content_type VARCHAR(100) NULL");
         ensureColumn("file_size", "ALTER TABLE file_url ADD COLUMN file_size BIGINT NULL");
         ensureColumn("storage_filename", "ALTER TABLE file_url ADD COLUMN storage_filename VARCHAR(255) NULL");
+        ensureColumn("source_file_url", "ALTER TABLE file_url ADD COLUMN source_file_url VARCHAR(512) NULL");
+        ensureColumn("source_content_type", "ALTER TABLE file_url ADD COLUMN source_content_type VARCHAR(100) NULL");
+        ensureColumn("source_file_size", "ALTER TABLE file_url ADD COLUMN source_file_size BIGINT NULL");
+        ensureColumn("source_storage_filename", "ALTER TABLE file_url ADD COLUMN source_storage_filename VARCHAR(255) NULL");
         ensureColumn("title", "ALTER TABLE file_url ADD COLUMN title VARCHAR(255) NULL");
         ensureColumn("category", "ALTER TABLE file_url ADD COLUMN category VARCHAR(100) NULL");
         ensureColumn("tags", "ALTER TABLE file_url ADD COLUMN tags VARCHAR(500) NULL");

@@ -33,6 +33,10 @@ public class FileUrlService {
         entity.setContentType(photoItem.getContentType());
         entity.setFileSize(photoItem.getSize());
         entity.setStorageFilename(photoItem.getStorageFilename());
+        entity.setSourceFileUrl(photoItem.getSourceFileUrl());
+        entity.setSourceContentType(photoItem.getSourceContentType());
+        entity.setSourceFileSize(photoItem.getSourceSize() == 0L ? null : photoItem.getSourceSize());
+        entity.setSourceStorageFilename(photoItem.getSourceStorageFilename());
         entity.setTitle(photoItem.getTitle());
         entity.setCategory(photoItem.getCategory());
         entity.setTags(joinTags(photoItem.getTags()));
@@ -81,6 +85,11 @@ public class FileUrlService {
         fileUrlRepository.deleteByPhotoId(photoId);
     }
 
+    public void deleteByPhotoId(String userId, String photoId) {
+        Long parsedUserId = parseUserId(userId);
+        fileUrlRepository.deleteByPhotoIdAndUserId(photoId, parsedUserId);
+    }
+
     public void deleteByRecordId(String userId, Long id) {
         Long parsedUserId = parseUserId(userId);
         FileUrlEntity entity = fileUrlRepository.findByIdAndUserId(id, parsedUserId)
@@ -101,6 +110,10 @@ public class FileUrlService {
         photoItem.setSize(entity.getFileSize() == null ? 0L : entity.getFileSize());
         photoItem.setStorageFilename(entity.getStorageFilename());
         photoItem.setFileUrl(entity.getFileUrl());
+        photoItem.setSourceFileUrl(entity.getSourceFileUrl());
+        photoItem.setSourceContentType(entity.getSourceContentType());
+        photoItem.setSourceSize(entity.getSourceFileSize() == null ? 0L : entity.getSourceFileSize());
+        photoItem.setSourceStorageFilename(entity.getSourceStorageFilename());
         photoItem.setCreatedAt(entity.getCreatedAt());
         return photoItem;
     }

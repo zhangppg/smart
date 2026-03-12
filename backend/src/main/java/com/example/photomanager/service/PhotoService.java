@@ -5,6 +5,8 @@ import com.example.photomanager.model.PhotoItem;
 import com.example.photomanager.storage.service.FileUrlService;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -12,6 +14,7 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -27,11 +30,14 @@ import java.util.stream.Collectors;
 
 @Service
 public class PhotoService {
+    private static final Logger log = LoggerFactory.getLogger(PhotoService.class);
+
     private final Path uploadDir;
     private final Path metadataFile;
     private final ObjectMapper objectMapper;
     private final FileUrlService fileUrlService;
     private final Map<String, PhotoItem> photos = new ConcurrentHashMap<>();
+    private final Map<String, Object> previewLocks = new ConcurrentHashMap<>();
 
     public PhotoService(@Value("${photo.storage.dir:data/uploads/photos}") String storageDir,
                         @Value("${photo.storage.metadata:data/photos.json}") String metadataPath,
@@ -59,27 +65,87 @@ public class PhotoService {
         }
 
         String id = UUID.randomUUID().toString();
-        String ext = StringUtils.getFilenameExtension(file.getOriginalFilename());
-        String storageFilename = ext == null || ext.isBlank() ? id : id + "." + ext;
-        Path target = uploadDir.resolve(storageFilename);
+        String originalFilename = file.getOriginalFilename();
+        String ext = safeLowerExt(StringUtils.getFilenameExtension(originalFilename));
+        boolean isHeic = isHeicUpload(contentType, ext);
 
-        try (InputStream inputStream = file.getInputStream()) {
-            Files.copy(inputStream, target, StandardCopyOption.REPLACE_EXISTING);
-        } catch (IOException e) {
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to store photo", e);
+        Path viewPath;
+        String storageFilename;
+        String viewContentType;
+        long viewSize;
+
+        Path sourcePath = null;
+        String sourceStorageFilename = null;
+        String sourceContentType = null;
+        long sourceSize = 0L;
+
+        if (isHeic) {
+            // Store original HEIC for download...
+            String sourceExt = (ext == null || ext.isBlank()) ? "heic" : ext;
+            sourceStorageFilename = id + "." + sourceExt;
+            sourcePath = uploadDir.resolve(sourceStorageFilename);
+            try (InputStream inputStream = file.getInputStream()) {
+                Files.copy(inputStream, sourcePath, StandardCopyOption.REPLACE_EXISTING);
+            } catch (IOException e) {
+                throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to store photo", e);
+            }
+
+            sourceContentType = contentType;
+            try {
+                sourceSize = Files.size(sourcePath);
+            } catch (IOException ignored) {
+                sourceSize = file.getSize();
+            }
+
+            // ...and generate a JPEG preview for browser <img>.
+            storageFilename = id + ".jpg";
+            viewPath = uploadDir.resolve(storageFilename);
+            try {
+                convertHeicToJpeg(sourcePath, viewPath);
+                viewContentType = "image/jpeg";
+                viewSize = Files.size(viewPath);
+            } catch (Exception ex) {
+                // If conversion fails, fall back to serving HEIC (may not display in most browsers).
+                try {
+                    Files.deleteIfExists(viewPath);
+                } catch (IOException ignored) {
+                }
+                storageFilename = sourceStorageFilename;
+                viewPath = sourcePath;
+                viewContentType = contentType;
+                viewSize = sourceSize;
+                sourcePath = null;
+                sourceStorageFilename = null;
+                sourceContentType = null;
+                sourceSize = 0L;
+            }
+        } else {
+            storageFilename = (ext == null || ext.isBlank()) ? id : id + "." + ext;
+            viewPath = uploadDir.resolve(storageFilename);
+            try (InputStream inputStream = file.getInputStream()) {
+                Files.copy(inputStream, viewPath, StandardCopyOption.REPLACE_EXISTING);
+            } catch (IOException e) {
+                throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to store photo", e);
+            }
+            viewContentType = contentType;
+            viewSize = file.getSize();
         }
 
         PhotoItem item = new PhotoItem();
         item.setId(id);
         item.setOwnerId(userId);
-        item.setTitle((title == null || title.isBlank()) ? file.getOriginalFilename() : title.trim());
+        item.setTitle((title == null || title.isBlank()) ? originalFilename : title.trim());
         item.setCategory(normalizeNullable(category));
         item.setTags(parseTags(tagsRaw));
-        item.setOriginalFilename(file.getOriginalFilename());
-        item.setContentType(contentType);
-        item.setSize(file.getSize());
+        item.setOriginalFilename(originalFilename);
+        item.setContentType(viewContentType);
+        item.setSize(viewSize);
         item.setStorageFilename(storageFilename);
-        item.setFileUrl(target.toString());
+        item.setFileUrl(viewPath.toString());
+        item.setSourceFileUrl(sourcePath == null ? null : sourcePath.toString());
+        item.setSourceStorageFilename(sourceStorageFilename);
+        item.setSourceContentType(sourceContentType);
+        item.setSourceSize(sourceSize);
         item.setCreatedAt(Instant.now());
 
         photos.put(id, item);
@@ -89,7 +155,10 @@ public class PhotoService {
         } catch (RuntimeException ex) {
             photos.remove(id);
             try {
-                Files.deleteIfExists(target);
+                Files.deleteIfExists(viewPath);
+                if (sourcePath != null) {
+                    Files.deleteIfExists(sourcePath);
+                }
             } catch (IOException ignored) {
             }
             throw ex;
@@ -131,12 +200,21 @@ public class PhotoService {
     }
 
     public Path getPhotoPath(String userId, String id) {
+        return getPhotoViewPath(userId, id);
+    }
+
+    public Path getPhotoViewPath(String userId, String id) {
         PhotoItem photo = getPhotoOrThrow(userId, id);
-        Path path = Path.of(photo.getFileUrl()).toAbsolutePath().normalize();
-        if (!path.startsWith(uploadDir) || !Files.exists(path)) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Photo file not found");
-        }
-        return path;
+        PhotoItem maybeConverted = ensureHeicPreviewIfNeeded(photo);
+        return resolveAndValidate(maybeConverted.getFileUrl());
+    }
+
+    public Path getPhotoDownloadPath(String userId, String id) {
+        PhotoItem photo = getPhotoOrThrow(userId, id);
+        String url = (photo.getSourceFileUrl() != null && !photo.getSourceFileUrl().isBlank())
+                ? photo.getSourceFileUrl()
+                : photo.getFileUrl();
+        return resolveAndValidate(url);
     }
 
     public PhotoItem getPhotoOrThrow(String userId, String id) {
@@ -147,14 +225,32 @@ public class PhotoService {
         PhotoItem photo = getPhotoOrThrow(userId, id);
         photos.remove(photo.getId());
 
-        Path path = Path.of(photo.getFileUrl()).toAbsolutePath().normalize();
+        // Always delete DB record even if file deletion fails (avoid 500 + stale UI).
+        // File deletion is best-effort; orphaned files are acceptable compared to broken delete.
         try {
-            Files.deleteIfExists(path);
-        } catch (IOException e) {
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to delete photo file", e);
+            fileUrlService.deleteByPhotoId(userId, photo.getId());
+        } catch (RuntimeException ex) {
+            throw ex;
         }
 
-        fileUrlService.deleteByPhotoId(photo.getId());
+        Path viewPath = photo.getFileUrl() == null ? null : Path.of(photo.getFileUrl()).toAbsolutePath().normalize();
+        try {
+            if (viewPath != null) {
+                Files.deleteIfExists(viewPath);
+            }
+        } catch (IOException e) {
+            log.warn("Failed to delete view file for photo {}: {}", photo.getId(), e.toString());
+        }
+
+        if (photo.getSourceFileUrl() != null && !photo.getSourceFileUrl().isBlank()) {
+            try {
+                Path sourcePath = Path.of(photo.getSourceFileUrl()).toAbsolutePath().normalize();
+                Files.deleteIfExists(sourcePath);
+            } catch (Exception e) {
+                log.warn("Failed to delete source file for photo {}: {}", photo.getId(), e.toString());
+            }
+        }
+
         persistMetadata();
     }
 
@@ -212,7 +308,124 @@ public class PhotoService {
         try {
             objectMapper.writerWithDefaultPrettyPrinter().writeValue(metadataFile.toFile(), new ArrayList<>(photos.values()));
         } catch (IOException e) {
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to save metadata", e);
+            // Metadata file is legacy; don't break core API behavior if it fails.
+            log.warn("Failed to save metadata file {}: {}", metadataFile, e.toString());
         }
+    }
+
+    private Path resolveAndValidate(String fileUrl) {
+        if (fileUrl == null || fileUrl.isBlank()) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Photo file not found");
+        }
+        Path path = Path.of(fileUrl).toAbsolutePath().normalize();
+        if (!path.startsWith(uploadDir) || !Files.exists(path)) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Photo file not found");
+        }
+        return path;
+    }
+
+    private boolean isHeicUpload(String contentType, String ext) {
+        String ct = (contentType == null) ? "" : contentType.toLowerCase();
+        String e = (ext == null) ? "" : ext.toLowerCase();
+        return ct.equals("image/heic") || ct.equals("image/heif") || ct.equals("image/heif-sequence")
+                || e.equals("heic") || e.equals("heif");
+    }
+
+    private boolean isHeicPath(String fileUrl) {
+        if (fileUrl == null) return false;
+        String p = fileUrl.toLowerCase();
+        return p.endsWith(".heic") || p.endsWith(".heif");
+    }
+
+    private String safeLowerExt(String ext) {
+        if (ext == null) return null;
+        String trimmed = ext.trim();
+        return trimmed.isEmpty() ? null : trimmed.toLowerCase();
+    }
+
+    private void convertHeicToJpeg(Path inputHeic, Path outputJpeg) throws IOException, InterruptedException {
+        // Prefer macOS built-in tool when available.
+        // Example: sips -s format jpeg input.heic --out output.jpg
+        ProcessBuilder pb = new ProcessBuilder(
+                "sips",
+                "-s", "format", "jpeg",
+                inputHeic.toString(),
+                "--out", outputJpeg.toString()
+        );
+        pb.redirectErrorStream(true);
+        Process p = pb.start();
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        try (InputStream is = p.getInputStream()) {
+            is.transferTo(out);
+        }
+        int code = p.waitFor();
+        if (code != 0 || !Files.exists(outputJpeg) || Files.size(outputJpeg) == 0L) {
+            String msg = out.toString();
+            throw new IOException("HEIC conversion failed (sips exit " + code + "): " + msg);
+        }
+    }
+
+    private PhotoItem ensureHeicPreviewIfNeeded(PhotoItem photo) {
+        if (photo == null) return null;
+
+        // Already has a separate source file (original) -> view is expected to be browser-friendly.
+        if (photo.getSourceFileUrl() != null && !photo.getSourceFileUrl().isBlank()) {
+            return photo;
+        }
+
+        boolean looksHeic = isHeicUpload(photo.getContentType(), safeLowerExt(StringUtils.getFilenameExtension(photo.getOriginalFilename())))
+                || isHeicPath(photo.getFileUrl())
+                || isHeicUpload(photo.getContentType(), safeLowerExt(StringUtils.getFilenameExtension(photo.getStorageFilename())));
+        if (!looksHeic) return photo;
+
+        Object lock = previewLocks.computeIfAbsent(photo.getId(), k -> new Object());
+        synchronized (lock) {
+            // Re-read latest record; another thread may have converted already.
+            PhotoItem latest = fileUrlService.getPhotoById(photo.getOwnerId(), photo.getId());
+            if (latest.getSourceFileUrl() != null && !latest.getSourceFileUrl().isBlank()) {
+                return latest;
+            }
+
+            Path sourcePath = resolveAndValidate(latest.getFileUrl());
+            Path previewPath = uploadDir.resolve(latest.getId() + ".jpg").toAbsolutePath().normalize();
+
+            // If preview already exists from a previous attempt, just wire it up.
+            if (Files.exists(previewPath)) {
+                try {
+                    if (Files.size(previewPath) > 0L) {
+                        wirePreview(latest, sourcePath, previewPath);
+                        fileUrlService.saveOrUpdate(latest);
+                        return latest;
+                    }
+                } catch (IOException ignored) {
+                }
+            }
+
+            try {
+                convertHeicToJpeg(sourcePath, previewPath);
+                wirePreview(latest, sourcePath, previewPath);
+                fileUrlService.saveOrUpdate(latest);
+                return latest;
+            } catch (Exception ex) {
+                // Don't block viewing if conversion fails; serve original (may not render in browser).
+                try {
+                    Files.deleteIfExists(previewPath);
+                } catch (IOException ignored) {
+                }
+                return latest;
+            }
+        }
+    }
+
+    private void wirePreview(PhotoItem item, Path sourcePath, Path previewPath) throws IOException {
+        item.setSourceFileUrl(sourcePath.toString());
+        item.setSourceStorageFilename(item.getStorageFilename());
+        item.setSourceContentType(item.getContentType() == null ? "image/heic" : item.getContentType());
+        item.setSourceSize(Files.size(sourcePath));
+
+        item.setFileUrl(previewPath.toString());
+        item.setStorageFilename(item.getId() + ".jpg");
+        item.setContentType("image/jpeg");
+        item.setSize(Files.size(previewPath));
     }
 }

@@ -26,7 +26,7 @@ app:
 
 photo:
   storage:
-    dir: /Users/macmini/data/project/未命名文件夹/backend/data/uploads/photos
+    dir: /Users/macmini/data/project/photos/smart/backend/data/uploads/photos
     metadata: data/photos.json
 logging:
   level:

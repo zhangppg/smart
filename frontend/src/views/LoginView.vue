@@ -49,7 +49,7 @@ export default {
         const action = this.authMode === 'login' ? login : register
         const { data } = await action(this.authForm.username, this.authForm.password)
         saveAuth(data.token, data.username)
-        this.$router.replace('/photos')
+        this.$router.replace('/')
       } catch (e) {
         this.authError = e.response?.data?.message || 'Authentication failed'
       } finally {

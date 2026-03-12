@@ -39,6 +39,18 @@ public class FileUrlEntity {
     @Column(name = "storage_filename", length = 255)
     private String storageFilename;
 
+    @Column(name = "source_file_url", length = 512)
+    private String sourceFileUrl;
+
+    @Column(name = "source_content_type", length = 100)
+    private String sourceContentType;
+
+    @Column(name = "source_file_size")
+    private Long sourceFileSize;
+
+    @Column(name = "source_storage_filename", length = 255)
+    private String sourceStorageFilename;
+
     @Column(name = "title", length = 255)
     private String title;
 
@@ -132,6 +144,38 @@ public class FileUrlEntity {
 
     public void setStorageFilename(String storageFilename) {
         this.storageFilename = storageFilename;
+    }
+
+    public String getSourceFileUrl() {
+        return sourceFileUrl;
+    }
+
+    public void setSourceFileUrl(String sourceFileUrl) {
+        this.sourceFileUrl = sourceFileUrl;
+    }
+
+    public String getSourceContentType() {
+        return sourceContentType;
+    }
+
+    public void setSourceContentType(String sourceContentType) {
+        this.sourceContentType = sourceContentType;
+    }
+
+    public Long getSourceFileSize() {
+        return sourceFileSize;
+    }
+
+    public void setSourceFileSize(Long sourceFileSize) {
+        this.sourceFileSize = sourceFileSize;
+    }
+
+    public String getSourceStorageFilename() {
+        return sourceStorageFilename;
+    }
+
+    public void setSourceStorageFilename(String sourceStorageFilename) {
+        this.sourceStorageFilename = sourceStorageFilename;
     }
 
     public Instant getCreatedAt() {

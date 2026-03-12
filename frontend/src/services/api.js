@@ -7,6 +7,33 @@ const api = axios.create({
   baseURL: process.env.VUE_APP_API_BASE_URL || 'http://localhost:8080'
 })
 
+const TOAST_EVENT = 'app-toast'
+let lastServerGlitchAt = 0
+
+function emitToast(message, durationMs) {
+  try {
+    window.dispatchEvent(
+      new CustomEvent(TOAST_EVENT, {
+        detail: { message, durationMs }
+      })
+    )
+  } catch (e) {
+    // noop (e.g. SSR-like environments)
+  }
+}
+
+function maybeNotifyServerGlitch(error) {
+  const status = error?.response?.status
+  const isNetworkError = !error?.response
+  const isServerError = typeof status === 'number' && status >= 500
+  if (!isNetworkError && !isServerError) return
+
+  const now = Date.now()
+  if (now - lastServerGlitchAt < 1200) return
+  lastServerGlitchAt = now
+  emitToast('稍等一下，服务器开小差了', 2000)
+}
+
 api.interceptors.request.use(config => {
   const token = getToken()
   if (token) {
@@ -14,6 +41,14 @@ api.interceptors.request.use(config => {
   }
   return config
 })
+
+api.interceptors.response.use(
+  response => response,
+  error => {
+    maybeNotifyServerGlitch(error)
+    return Promise.reject(error)
+  }
+)
 
 export function getToken() {
   return localStorage.getItem(TOKEN_KEY)

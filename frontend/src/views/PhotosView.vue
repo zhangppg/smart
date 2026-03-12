@@ -6,7 +6,11 @@
     </header>
 
     <section class="card topbar">
-      <div>
+      <div class="topbar-left">
+        <button class="home-btn" type="button" @click="goHome" aria-label="Back to home">
+          <span class="home-btn-icon" aria-hidden="true">←</span>
+          <span>Home</span>
+        </button>
         <strong>{{ username }}</strong>
       </div>
       <button class="danger" @click="logout">Logout</button>
@@ -116,6 +120,9 @@ export default {
   methods: {
     downloadUrl,
     viewUrl,
+    goHome() {
+      this.$router.push('/')
+    },
     logout() {
       clearAuth()
       this.$router.replace('/login')
@@ -263,6 +270,12 @@ export default {
   align-items: center;
 }
 
+.topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
 .form,
 .filter-form {
   display: grid;
@@ -293,6 +306,35 @@ button {
   background: #2563eb;
   color: #fff;
   cursor: pointer;
+}
+
+.home-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  border: 1px solid #e5e7eb;
+  background: #f9fafb;
+  color: #111827;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.06);
+  transition: transform 120ms ease, box-shadow 120ms ease, background 120ms ease;
+}
+
+.home-btn:hover {
+  background: #ffffff;
+  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.08);
+  transform: translateY(-1px);
+}
+
+.home-btn:active {
+  transform: translateY(0);
+}
+
+.home-btn-icon {
+  font-size: 14px;
+  line-height: 1;
+  opacity: 0.9;
 }
 
 button:disabled {

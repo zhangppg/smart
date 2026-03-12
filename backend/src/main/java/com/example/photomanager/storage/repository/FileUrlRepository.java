@@ -42,4 +42,6 @@ public interface FileUrlRepository extends JpaRepository<FileUrlEntity, Long> {
     );
 
     void deleteByPhotoId(String photoId);
+
+    void deleteByPhotoIdAndUserId(String photoId, Long userId);
 }

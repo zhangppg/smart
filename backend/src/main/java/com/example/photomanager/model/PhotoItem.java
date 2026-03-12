@@ -16,6 +16,12 @@ public class PhotoItem {
     private long size;
     private String storageFilename;
     private String fileUrl;
+    // When we generate a browser-friendly preview (e.g. HEIC -> JPEG), we keep the
+    // original upload as a separate "source" file for download.
+    private String sourceContentType;
+    private long sourceSize;
+    private String sourceStorageFilename;
+    private String sourceFileUrl;
     private Instant createdAt;
 
     public String getId() {
@@ -104,6 +110,38 @@ public class PhotoItem {
 
     public void setFileUrl(String fileUrl) {
         this.fileUrl = fileUrl;
+    }
+
+    public String getSourceContentType() {
+        return sourceContentType;
+    }
+
+    public void setSourceContentType(String sourceContentType) {
+        this.sourceContentType = sourceContentType;
+    }
+
+    public long getSourceSize() {
+        return sourceSize;
+    }
+
+    public void setSourceSize(long sourceSize) {
+        this.sourceSize = sourceSize;
+    }
+
+    public String getSourceStorageFilename() {
+        return sourceStorageFilename;
+    }
+
+    public void setSourceStorageFilename(String sourceStorageFilename) {
+        this.sourceStorageFilename = sourceStorageFilename;
+    }
+
+    public String getSourceFileUrl() {
+        return sourceFileUrl;
+    }
+
+    public void setSourceFileUrl(String sourceFileUrl) {
+        this.sourceFileUrl = sourceFileUrl;
     }
 
     public Instant getCreatedAt() {
