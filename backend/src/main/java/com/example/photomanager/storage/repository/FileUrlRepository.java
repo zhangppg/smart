@@ -4,6 +4,7 @@ import com.example.photomanager.storage.entity.FileUrlEntity;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -43,5 +44,7 @@ public interface FileUrlRepository extends JpaRepository<FileUrlEntity, Long> {
 
     void deleteByPhotoId(String photoId);
 
-    void deleteByPhotoIdAndUserId(String photoId, Long userId);
+    @Modifying
+    @Query("DELETE FROM FileUrlEntity f WHERE f.photoId = :photoId AND f.userId = :userId")
+    int deleteByPhotoIdAndUserId(@Param("photoId") String photoId, @Param("userId") Long userId);
 }

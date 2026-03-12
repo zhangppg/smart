@@ -17,23 +17,6 @@
   "createdAt" : "2026-03-12T13:11:32.250870Z"
 }, {
   "recordId" : null,
-  "id" : "153f16ff-702d-4b2c-a2cb-8009ccb127ba",
-  "ownerId" : "2",
-  "title" : "2",
-  "category" : "2",
-  "tags" : [ "2" ],
-  "originalFilename" : "36_livephoto.HEIC",
-  "contentType" : "image/jpeg",
-  "size" : 2542505,
-  "storageFilename" : "153f16ff-702d-4b2c-a2cb-8009ccb127ba.jpg",
-  "fileUrl" : "/Users/macmini/data/project/photos/smart/backend/data/uploads/photos/153f16ff-702d-4b2c-a2cb-8009ccb127ba.jpg",
-  "sourceContentType" : "image/heic",
-  "sourceSize" : 1304478,
-  "sourceStorageFilename" : "153f16ff-702d-4b2c-a2cb-8009ccb127ba.heic",
-  "sourceFileUrl" : "/Users/macmini/data/project/photos/smart/backend/data/uploads/photos/153f16ff-702d-4b2c-a2cb-8009ccb127ba.heic",
-  "createdAt" : "2026-03-12T13:56:18.511205Z"
-}, {
-  "recordId" : null,
   "id" : "7e419a4d-e259-4cfe-b07b-28414b553ca2",
   "ownerId" : "2",
   "title" : "1",
