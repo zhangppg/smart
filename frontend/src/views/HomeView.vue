@@ -11,7 +11,7 @@
 
       <nav class="nav">
         <span v-if="authed" class="user">{{ username }}</span>
-        <button v-if="authed" class="btn btn-ghost" @click="$router.push('/photos')">Manage</button>
+        <button v-if="canManage" class="btn btn-ghost" @click="$router.push('/photos')">Manage</button>
         <button v-if="authed" class="btn btn-primary" @click="logout">Logout</button>
         <button v-else class="btn btn-primary" @click="$router.push('/login')">Login</button>
       </nav>
@@ -201,20 +201,14 @@
 </template>
 
 <script>
-import {
-  clearAuth,
-  downloadUrl,
-  getToken,
-  getUsername,
-  listPhotos,
-  viewUrl
-} from '../services/api'
+import { clearAuth, downloadUrl, getRoleCode, getToken, getUsername, listPhotos, viewUrl } from '../services/api'
 
 export default {
   name: 'HomeView',
   data() {
     return {
       username: getUsername() || '',
+      roleCode: getRoleCode(),
       photos: [],
       loading: false,
       loadingMore: false,
@@ -239,6 +233,11 @@ export default {
   computed: {
     authed() {
       return !!getToken()
+    },
+    canManage() {
+      // role_code=0 super, role_code=3 normal (own manage). role_code=1 read-only.
+      const role = Number(this.roleCode)
+      return this.authed && (role === 0 || role === 3)
     },
     canLoadMore() {
       return this.page < (this.totalPages || 1)

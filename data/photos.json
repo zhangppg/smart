@@ -51,6 +51,23 @@
   "createdAt" : "2026-03-12T13:56:07.856662Z"
 }, {
   "recordId" : null,
+  "id" : "009519dd-89be-4089-aedd-3677488ea21d",
+  "ownerId" : "2",
+  "title" : "5",
+  "category" : "5",
+  "tags" : [ "5" ],
+  "originalFilename" : "IMG_5349.HEIC",
+  "contentType" : "image/jpeg",
+  "size" : 2389149,
+  "storageFilename" : "009519dd-89be-4089-aedd-3677488ea21d.jpg",
+  "fileUrl" : "/Users/macmini/data/project/photos/smart/backend/data/uploads/photos/20260313/009519dd-89be-4089-aedd-3677488ea21d.jpg",
+  "sourceContentType" : "image/heic",
+  "sourceSize" : 2015089,
+  "sourceStorageFilename" : "009519dd-89be-4089-aedd-3677488ea21d.heic",
+  "sourceFileUrl" : "/Users/macmini/data/project/photos/smart/backend/data/uploads/photos/20260313/009519dd-89be-4089-aedd-3677488ea21d.heic",
+  "createdAt" : "2026-03-13T08:14:13.153753Z"
+}, {
+  "recordId" : null,
   "id" : "34172b94-182a-4b42-bebe-fa7a77c7f3d2",
   "ownerId" : "2",
   "title" : "4",

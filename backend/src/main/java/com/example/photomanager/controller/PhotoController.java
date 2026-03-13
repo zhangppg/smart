@@ -9,6 +9,7 @@ import com.example.photomanager.service.PhotoService;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -21,6 +22,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.nio.file.Path;
 
@@ -38,6 +40,7 @@ public class PhotoController {
                                            @RequestParam(value = "title", required = false) String title,
                                            @RequestParam(value = "category", required = false) String category,
                                            @RequestParam(value = "tags", required = false) String tags) {
+        ensureUploadAllowed();
         PhotoItem saved = photoService.savePhoto(currentUserId(), file, title, category, tags);
         return new PhotoUploadResponse("Photo uploaded successfully", saved);
     }
@@ -45,7 +48,9 @@ public class PhotoController {
     @PutMapping("/{id}")
     public PhotoItem updatePhoto(@PathVariable String id,
                                  @RequestBody PhotoUpdateRequest request) {
-        return photoService.updatePhoto(currentUserId(), id, request.getTitle(), request.getCategory(), request.getTags());
+        ensureWriteAllowed();
+        boolean allAccess = AuthContext.getRoleCode() == 0;
+        return photoService.updatePhoto(currentUserId(), id, request.getTitle(), request.getCategory(), request.getTags(), allAccess);
     }
 
     @GetMapping
@@ -54,13 +59,17 @@ public class PhotoController {
                                                @RequestParam(value = "tag", required = false) String tag,
                                                @RequestParam(value = "page", defaultValue = "1") int page,
                                                @RequestParam(value = "size", defaultValue = "12") int size) {
+        if (canAccessAllPhotos()) {
+            return photoService.listPhotosAll(q, category, tag, page, size);
+        }
         return photoService.listPhotos(currentUserId(), q, category, tag, page, size);
     }
 
     @GetMapping("/{id}/download")
     public ResponseEntity<Resource> downloadPhoto(@PathVariable String id) {
-        PhotoItem photo = photoService.getPhotoOrThrow(currentUserId(), id);
-        Path path = photoService.getPhotoDownloadPath(currentUserId(), id);
+        boolean allAccess = canAccessAllPhotos();
+        PhotoItem photo = photoService.getPhotoOrThrow(currentUserId(), id, allAccess);
+        Path path = photoService.getPhotoDownloadPath(currentUserId(), id, allAccess);
         Resource resource = new FileSystemResource(path);
 
         String downloadContentType = photo.getSourceContentType() != null && !photo.getSourceContentType().isBlank()
@@ -76,8 +85,9 @@ public class PhotoController {
 
     @GetMapping("/{id}/view")
     public ResponseEntity<Resource> viewPhoto(@PathVariable String id) {
-        PhotoItem photo = photoService.getPhotoOrThrow(currentUserId(), id);
-        Path path = photoService.getPhotoViewPath(currentUserId(), id);
+        boolean allAccess = canAccessAllPhotos();
+        PhotoItem photo = photoService.getPhotoOrThrow(currentUserId(), id, allAccess);
+        Path path = photoService.getPhotoViewPath(currentUserId(), id, allAccess);
         Resource resource = new FileSystemResource(path);
 
         return ResponseEntity.ok()
@@ -88,17 +98,42 @@ public class PhotoController {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deletePhoto(@PathVariable String id) {
-        photoService.deletePhoto(currentUserId(), id);
+        ensureWriteAllowed();
+        boolean allAccess = AuthContext.getRoleCode() == 0;
+        photoService.deletePhoto(currentUserId(), id, allAccess);
         return ResponseEntity.noContent().build();
     }
 
     @DeleteMapping("/file-url/{id}")
     public ResponseEntity<Void> deleteFileUrl(@PathVariable Long id) {
+        ensureWriteAllowed();
         photoService.deleteFileUrlRecord(currentUserId(), id);
         return ResponseEntity.noContent().build();
     }
 
     private String currentUserId() {
         return AuthContext.getUserId();
+    }
+
+    private void ensureUploadAllowed() {
+        // 0 = super, 3 = normal. 1 = read-only.
+        int role = AuthContext.getRoleCode();
+        if (role != 0 && role != 3) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "No permission");
+        }
+    }
+
+    private void ensureWriteAllowed() {
+        // 0 = super, 3 = normal (own only). 1 = read-only.
+        int role = AuthContext.getRoleCode();
+        if (role != 0 && role != 3) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "No permission");
+        }
+    }
+
+    private boolean canAccessAllPhotos() {
+        // 0 = super, 1 = read-only.
+        int role = AuthContext.getRoleCode();
+        return role == 0 || role == 1;
     }
 }

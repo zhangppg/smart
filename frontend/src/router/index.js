@@ -3,7 +3,7 @@ import Router from 'vue-router'
 import HomeView from '../views/HomeView.vue'
 import LoginView from '../views/LoginView.vue'
 import PhotosView from '../views/PhotosView.vue'
-import { getToken } from '../services/api'
+import { getRoleCode, getToken } from '../services/api'
 
 Vue.use(Router)
 
@@ -38,6 +38,13 @@ router.beforeEach((to, from, next) => {
   if (to.matched.some(r => r.meta && r.meta.requiresAuth) && !authed) {
     next('/login')
     return
+  }
+  if (to.path === '/photos') {
+    // role_code=1 is read-only: can view photos on homepage but cannot enter manage page.
+    if (getRoleCode() === 1) {
+      next('/')
+      return
+    }
   }
   next()
 })

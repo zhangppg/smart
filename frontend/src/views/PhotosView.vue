@@ -12,18 +12,22 @@
           <span>Home</span>
         </button>
         <strong>{{ username }}</strong>
+        <span v-if="!canManage" class="mode-pill" title="Read-only account">Read-only</span>
       </div>
       <button class="danger" @click="logout">Logout</button>
     </section>
 
     <section class="card">
-      <h2>Upload Photo</h2>
+      <div class="section-head">
+        <h2>Upload Photo</h2>
+        <p v-if="!canManage" class="hint">Your account is read-only. Upload/edit/delete are disabled.</p>
+      </div>
       <form class="form" @submit.prevent="onUpload">
         <input v-model.trim="uploadForm.title" type="text" placeholder="Title (optional)" />
         <input v-model.trim="uploadForm.category" type="text" placeholder="Category (e.g. travel)" />
         <input v-model.trim="uploadForm.tags" type="text" placeholder="Tags (comma separated)" />
-        <input ref="file" type="file" accept="image/*" required />
-        <button type="submit" :disabled="uploading">{{ uploading ? 'Uploading...' : 'Upload' }}</button>
+        <input ref="file" type="file" accept="image/*" :disabled="!canManage" :required="canManage" />
+        <button type="submit" :disabled="!canManage || uploading">{{ uploading ? 'Uploading...' : 'Upload' }}</button>
       </form>
     </section>
 
@@ -59,7 +63,7 @@
           </div>
           <div class="actions">
             <a :href="downloadUrl(photo.id)" target="_blank" rel="noopener noreferrer">Download</a>
-            <div class="action-buttons">
+            <div v-if="canManage" class="action-buttons">
               <button class="secondary" @click="onEdit(photo)">Edit</button>
               <button class="danger" @click="onDelete(photo.id)">Delete</button>
             </div>
@@ -81,6 +85,7 @@ import {
   clearAuth,
   deletePhoto,
   downloadUrl,
+  getRoleCode,
   getUsername,
   listPhotos,
   updatePhoto,
@@ -93,6 +98,7 @@ export default {
   data() {
     return {
       username: getUsername() || '',
+      roleCode: getRoleCode(),
       uploadForm: {
         title: '',
         category: '',
@@ -116,6 +122,12 @@ export default {
   },
   created() {
     this.fetchPhotos()
+  },
+  computed: {
+    canManage() {
+      const role = Number(this.roleCode)
+      return role === 0 || role === 3
+    }
   },
   methods: {
     downloadUrl,
@@ -158,6 +170,11 @@ export default {
       this.fetchPhotos()
     },
     async onUpload() {
+      if (!this.canManage) {
+        this.message = ''
+        this.error = 'Read-only account: upload is disabled'
+        return
+      }
       const file = this.$refs.file.files[0]
       if (!file) {
         this.error = 'Please choose a file'
@@ -186,6 +203,11 @@ export default {
       }
     },
     async onEdit(photo) {
+      if (!this.canManage) {
+        this.message = ''
+        this.error = 'Read-only account: edit is disabled'
+        return
+      }
       const title = prompt('Title', photo.title || '')
       if (title === null) return
       const category = prompt('Category', photo.category || '')
@@ -204,6 +226,11 @@ export default {
       }
     },
     async onDelete(id) {
+      if (!this.canManage) {
+        this.message = ''
+        this.error = 'Read-only account: delete is disabled'
+        return
+      }
       if (!confirm('Delete this photo?')) return
       this.error = ''
       this.message = ''
@@ -274,6 +301,35 @@ export default {
   display: flex;
   align-items: center;
   gap: 10px;
+}
+
+.mode-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid #e5e7eb;
+  background: #f9fafb;
+  color: #6b7280;
+  font-size: 12px;
+  letter-spacing: 0.2px;
+}
+
+.section-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.section-head h2 {
+  margin: 0;
+}
+
+.hint {
+  margin: 0;
+  color: #6b7280;
+  font-size: 13px;
 }
 
 .form,

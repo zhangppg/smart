@@ -14,9 +14,11 @@ import java.io.IOException;
 @Component
 public class AuthFilter extends OncePerRequestFilter {
     private final SessionService sessionService;
+    private final RoleCodeService roleCodeService;
 
-    public AuthFilter(SessionService sessionService) {
+    public AuthFilter(SessionService sessionService, RoleCodeService roleCodeService) {
         this.sessionService = sessionService;
+        this.roleCodeService = roleCodeService;
     }
 
     @Override
@@ -42,6 +44,7 @@ public class AuthFilter extends OncePerRequestFilter {
 
         try {
             AuthContext.setUserId(userId);
+            AuthContext.setRoleCode(roleCodeService.getRoleCode(userId));
             filterChain.doFilter(request, response);
         } finally {
             AuthContext.clear();

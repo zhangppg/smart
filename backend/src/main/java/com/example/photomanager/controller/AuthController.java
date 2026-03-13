@@ -24,15 +24,15 @@ public class AuthController {
 
     @PostMapping("/register")
     public AuthResponse register(@RequestBody @Valid AuthRequest request) {
-        User user = userService.register(request.getUsername(), request.getPassword());
+        User user = userService.register(request.getUsername(), request.getPassword(), request.getRoleCode());
         String token = sessionService.createToken(user.getId());
-        return new AuthResponse(token, user.getUsername());
+        return new AuthResponse(token, user.getUsername(), user.getRoleCode());
     }
 
     @PostMapping("/login")
     public AuthResponse login(@RequestBody @Valid AuthRequest request) {
         User user = userService.authenticate(request.getUsername(), request.getPassword());
         String token = sessionService.createToken(user.getId());
-        return new AuthResponse(token, user.getUsername());
+        return new AuthResponse(token, user.getUsername(), user.getRoleCode());
     }
 }

@@ -6,6 +6,7 @@ public class User {
     private String id;
     private String username;
     private String passwordHash;
+    private int roleCode;
     private Instant createdAt;
 
     public String getId() {
@@ -30,6 +31,14 @@ public class User {
 
     public void setPasswordHash(String passwordHash) {
         this.passwordHash = passwordHash;
+    }
+
+    public int getRoleCode() {
+        return roleCode;
+    }
+
+    public void setRoleCode(int roleCode) {
+        this.roleCode = roleCode;
     }
 
     public Instant getCreatedAt() {

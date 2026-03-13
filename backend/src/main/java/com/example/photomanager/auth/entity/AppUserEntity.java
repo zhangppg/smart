@@ -23,6 +23,9 @@ public class AppUserEntity {
     @Column(name = "password_hash", nullable = false, length = 64)
     private String passwordHash;
 
+    @Column(name = "role_code", nullable = false)
+    private Integer roleCode = 0;
+
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
 
@@ -55,6 +58,14 @@ public class AppUserEntity {
 
     public void setPasswordHash(String passwordHash) {
         this.passwordHash = passwordHash;
+    }
+
+    public Integer getRoleCode() {
+        return roleCode;
+    }
+
+    public void setRoleCode(Integer roleCode) {
+        this.roleCode = roleCode;
     }
 
     public Instant getCreatedAt() {

@@ -2,6 +2,7 @@ import axios from 'axios'
 
 const TOKEN_KEY = 'photo_manager_token'
 const USERNAME_KEY = 'photo_manager_username'
+const ROLE_CODE_KEY = 'photo_manager_role_code'
 
 function resolveApiBaseUrl() {
   const envUrl = process.env.VUE_APP_API_BASE_URL
@@ -73,18 +74,30 @@ export function getUsername() {
   return localStorage.getItem(USERNAME_KEY)
 }
 
-export function saveAuth(token, username) {
+export function getRoleCode() {
+  const v = localStorage.getItem(ROLE_CODE_KEY)
+  const n = Number(v)
+  return Number.isFinite(n) ? n : 0
+}
+
+export function saveAuth(token, username, roleCode) {
   localStorage.setItem(TOKEN_KEY, token)
   localStorage.setItem(USERNAME_KEY, username)
+  localStorage.setItem(ROLE_CODE_KEY, String(Number(roleCode) || 0))
 }
 
 export function clearAuth() {
   localStorage.removeItem(TOKEN_KEY)
   localStorage.removeItem(USERNAME_KEY)
+  localStorage.removeItem(ROLE_CODE_KEY)
 }
 
 export function register(username, password) {
   return api.post('/api/auth/register', { username, password })
+}
+
+export function registerWithRole(username, password, roleCode) {
+  return api.post('/api/auth/register', { username, password, roleCode })
 }
 
 export function login(username, password) {

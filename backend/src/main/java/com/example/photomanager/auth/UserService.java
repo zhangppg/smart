@@ -16,19 +16,24 @@ import java.security.NoSuchAlgorithmException;
 
 @Service
 public class UserService {
-    private static final String DEFAULT_RULE = "ROLE_USER";
+    // user_rule.rule_code stores numeric role codes in this project:
+    // 0 = super (all photos + manage), 1 = read-only (all photos), 3 = normal (own photos + manage own).
+    private static final String DEFAULT_RULE = "3";
 
     private final AppUserRepository appUserRepository;
     private final UserRuleRepository userRuleRepository;
+    private final RoleCodeService roleCodeService;
 
     public UserService(AppUserRepository appUserRepository,
-                       UserRuleRepository userRuleRepository) {
+                       UserRuleRepository userRuleRepository,
+                       RoleCodeService roleCodeService) {
         this.appUserRepository = appUserRepository;
         this.userRuleRepository = userRuleRepository;
+        this.roleCodeService = roleCodeService;
     }
 
     @Transactional
-    public User register(String username, String rawPassword) {
+    public User register(String username, String rawPassword, Integer roleCode) {
         String normalizedUsername = normalizeUsername(username);
         validatePassword(rawPassword);
 
@@ -36,14 +41,17 @@ public class UserService {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Username already exists");
         }
 
+        int normalizedRole = normalizeRoleCode(roleCode);
+
         AppUserEntity entity = new AppUserEntity();
         entity.setUsername(normalizedUsername);
         entity.setPasswordHash(hashPassword(rawPassword));
+        entity.setRoleCode(normalizedRole);
         AppUserEntity saved = appUserRepository.save(entity);
 
         UserRuleEntity userRule = new UserRuleEntity();
         userRule.setUserId(saved.getId());
-        userRule.setRuleCode(DEFAULT_RULE);
+        userRule.setRuleCode(String.valueOf(normalizedRole));
         userRuleRepository.save(userRule);
 
         return toModel(saved);
@@ -69,6 +77,8 @@ public class UserService {
         user.setId(String.valueOf(entity.getId()));
         user.setUsername(entity.getUsername());
         user.setPasswordHash(entity.getPasswordHash());
+        // Source of truth: user_role.role_code (if present); fallback to user.role_code.
+        user.setRoleCode(roleCodeService.getRoleCode(String.valueOf(entity.getId())));
         user.setCreatedAt(entity.getCreatedAt());
         return user;
     }
@@ -84,6 +94,16 @@ public class UserService {
         if (rawPassword == null || rawPassword.length() < 6) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Password must be at least 6 characters");
         }
+    }
+
+    private int normalizeRoleCode(Integer roleCode) {
+        if (roleCode == null) {
+            return Integer.parseInt(DEFAULT_RULE);
+        }
+        if (roleCode == 0 || roleCode == 1 || roleCode == 3) {
+            return roleCode;
+        }
+        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid roleCode (allowed: 0, 1, 3)");
     }
 
     private String hashPassword(String rawPassword) {

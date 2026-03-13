@@ -8,6 +8,14 @@
       <form class="form" @submit.prevent="submitAuth">
         <input v-model.trim="authForm.username" type="text" placeholder="Username" required />
         <input v-model="authForm.password" type="password" placeholder="Password (min 6 chars)" required />
+        <label v-if="authMode === 'register'" class="role">
+          <span class="role-label">Role</span>
+          <select v-model.number="authForm.roleCode" class="select" required>
+            <option :value="3">3 - Normal (manage own)</option>
+            <option :value="1">1 - Read-only (view all)</option>
+            <option :value="0">0 - Super (all + manage)</option>
+          </select>
+        </label>
         <button type="submit" :disabled="authLoading">
           {{ authLoading ? 'Please wait...' : authMode === 'login' ? 'Login' : 'Register' }}
         </button>
@@ -22,7 +30,7 @@
 </template>
 
 <script>
-import { login, register, saveAuth } from '../services/api'
+import { login, registerWithRole, saveAuth } from '../services/api'
 
 export default {
   name: 'LoginView',
@@ -33,7 +41,8 @@ export default {
       authError: '',
       authForm: {
         username: '',
-        password: ''
+        password: '',
+        roleCode: 3
       }
     }
   },
@@ -46,9 +55,12 @@ export default {
       this.authLoading = true
       this.authError = ''
       try {
-        const action = this.authMode === 'login' ? login : register
-        const { data } = await action(this.authForm.username, this.authForm.password)
-        saveAuth(data.token, data.username)
+        const action = this.authMode === 'login' ? login : registerWithRole
+        const { data } =
+          this.authMode === 'login'
+            ? await action(this.authForm.username, this.authForm.password)
+            : await action(this.authForm.username, this.authForm.password, this.authForm.roleCode)
+        saveAuth(data.token, data.username, data.roleCode)
         this.$router.replace('/')
       } catch (e) {
         this.authError = e.response?.data?.message || 'Authentication failed'
@@ -113,6 +125,23 @@ input {
   border: 1px solid #d1d5db;
   border-radius: 8px;
   padding: 10px;
+}
+
+.role {
+  display: grid;
+  gap: 6px;
+}
+
+.role-label {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.select {
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  padding: 10px;
+  background: #fff;
 }
 
 button {

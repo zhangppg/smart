@@ -21,6 +21,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -31,6 +34,7 @@ import java.util.stream.Collectors;
 @Service
 public class PhotoService {
     private static final Logger log = LoggerFactory.getLogger(PhotoService.class);
+    private static final DateTimeFormatter DAY_FOLDER = DateTimeFormatter.BASIC_ISO_DATE; // yyyyMMdd
 
     private final Path uploadDir;
     private final Path metadataFile;
@@ -69,6 +73,8 @@ public class PhotoService {
         String ext = safeLowerExt(StringUtils.getFilenameExtension(originalFilename));
         boolean isHeic = isHeicUpload(contentType, ext);
 
+        Path dayDir = resolveDayDir();
+
         Path viewPath;
         String storageFilename;
         String viewContentType;
@@ -83,7 +89,7 @@ public class PhotoService {
             // Store original HEIC for download...
             String sourceExt = (ext == null || ext.isBlank()) ? "heic" : ext;
             sourceStorageFilename = id + "." + sourceExt;
-            sourcePath = uploadDir.resolve(sourceStorageFilename);
+            sourcePath = dayDir.resolve(sourceStorageFilename);
             try (InputStream inputStream = file.getInputStream()) {
                 Files.copy(inputStream, sourcePath, StandardCopyOption.REPLACE_EXISTING);
             } catch (IOException e) {
@@ -99,7 +105,7 @@ public class PhotoService {
 
             // ...and generate a JPEG preview for browser <img>.
             storageFilename = id + ".jpg";
-            viewPath = uploadDir.resolve(storageFilename);
+            viewPath = dayDir.resolve(storageFilename);
             try {
                 convertHeicToJpeg(sourcePath, viewPath);
                 viewContentType = "image/jpeg";
@@ -121,7 +127,7 @@ public class PhotoService {
             }
         } else {
             storageFilename = (ext == null || ext.isBlank()) ? id : id + "." + ext;
-            viewPath = uploadDir.resolve(storageFilename);
+            viewPath = dayDir.resolve(storageFilename);
             try (InputStream inputStream = file.getInputStream()) {
                 Files.copy(inputStream, viewPath, StandardCopyOption.REPLACE_EXISTING);
             } catch (IOException e) {
@@ -171,7 +177,16 @@ public class PhotoService {
                                               String title,
                                               String category,
                                               String tagsRaw) {
-        PhotoItem item = getPhotoOrThrow(userId, id);
+        return updatePhoto(userId, id, title, category, tagsRaw, false);
+    }
+
+    public synchronized PhotoItem updatePhoto(String userId,
+                                              String id,
+                                              String title,
+                                              String category,
+                                              String tagsRaw,
+                                              boolean allAccess) {
+        PhotoItem item = getPhotoOrThrow(userId, id, allAccess);
 
         if (title != null) {
             String trimmedTitle = title.trim();
@@ -199,18 +214,34 @@ public class PhotoService {
         return fileUrlService.search(userId, q, category, tag, page, size);
     }
 
+    public PagedResponse<PhotoItem> listPhotosAll(String q,
+                                                  String category,
+                                                  String tag,
+                                                  int page,
+                                                  int size) {
+        return fileUrlService.searchAll(q, category, tag, page, size);
+    }
+
     public Path getPhotoPath(String userId, String id) {
         return getPhotoViewPath(userId, id);
     }
 
     public Path getPhotoViewPath(String userId, String id) {
-        PhotoItem photo = getPhotoOrThrow(userId, id);
+        return getPhotoViewPath(userId, id, false);
+    }
+
+    public Path getPhotoViewPath(String userId, String id, boolean allAccess) {
+        PhotoItem photo = getPhotoOrThrow(userId, id, allAccess);
         PhotoItem maybeConverted = ensureHeicPreviewIfNeeded(photo);
         return resolveAndValidate(maybeConverted.getFileUrl());
     }
 
     public Path getPhotoDownloadPath(String userId, String id) {
-        PhotoItem photo = getPhotoOrThrow(userId, id);
+        return getPhotoDownloadPath(userId, id, false);
+    }
+
+    public Path getPhotoDownloadPath(String userId, String id, boolean allAccess) {
+        PhotoItem photo = getPhotoOrThrow(userId, id, allAccess);
         String url = (photo.getSourceFileUrl() != null && !photo.getSourceFileUrl().isBlank())
                 ? photo.getSourceFileUrl()
                 : photo.getFileUrl();
@@ -218,17 +249,32 @@ public class PhotoService {
     }
 
     public PhotoItem getPhotoOrThrow(String userId, String id) {
+        return getPhotoOrThrow(userId, id, false);
+    }
+
+    public PhotoItem getPhotoOrThrow(String userId, String id, boolean allAccess) {
+        if (allAccess) {
+            return fileUrlService.getPhotoById(id);
+        }
         return fileUrlService.getPhotoById(userId, id);
     }
 
     public synchronized void deletePhoto(String userId, String id) {
-        PhotoItem photo = getPhotoOrThrow(userId, id);
+        deletePhoto(userId, id, false);
+    }
+
+    public synchronized void deletePhoto(String userId, String id, boolean allAccess) {
+        PhotoItem photo = getPhotoOrThrow(userId, id, allAccess);
         photos.remove(photo.getId());
 
         // Always delete DB record even if file deletion fails (avoid 500 + stale UI).
         // File deletion is best-effort; orphaned files are acceptable compared to broken delete.
         try {
-            fileUrlService.deleteByPhotoId(userId, photo.getId());
+            if (allAccess) {
+                fileUrlService.deleteByPhotoId(photo.getId());
+            } else {
+                fileUrlService.deleteByPhotoId(userId, photo.getId());
+            }
         } catch (RuntimeException ex) {
             throw ex;
         }
@@ -324,6 +370,20 @@ public class PhotoService {
         return path;
     }
 
+    private Path resolveDayDir() {
+        String day = LocalDate.now(ZoneId.systemDefault()).format(DAY_FOLDER);
+        Path dayDir = uploadDir.resolve(day).toAbsolutePath().normalize();
+        if (!dayDir.startsWith(uploadDir)) {
+            throw new IllegalStateException("Invalid upload day directory");
+        }
+        try {
+            Files.createDirectories(dayDir);
+        } catch (IOException e) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to initialize upload directory", e);
+        }
+        return dayDir;
+    }
+
     private boolean isHeicUpload(String contentType, String ext) {
         String ct = (contentType == null) ? "" : contentType.toLowerCase();
         String e = (ext == null) ? "" : ext.toLowerCase();
@@ -387,7 +447,8 @@ public class PhotoService {
             }
 
             Path sourcePath = resolveAndValidate(latest.getFileUrl());
-            Path previewPath = uploadDir.resolve(latest.getId() + ".jpg").toAbsolutePath().normalize();
+            Path parentDir = sourcePath.getParent() == null ? uploadDir : sourcePath.getParent();
+            Path previewPath = parentDir.resolve(latest.getId() + ".jpg").toAbsolutePath().normalize();
 
             // If preview already exists from a previous attempt, just wire it up.
             if (Files.exists(previewPath)) {

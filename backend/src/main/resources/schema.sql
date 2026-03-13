@@ -2,6 +2,7 @@ CREATE TABLE IF NOT EXISTS `user` (
   `id` BIGINT NOT NULL AUTO_INCREMENT,
   `username` VARCHAR(64) NOT NULL,
   `password_hash` VARCHAR(64) NOT NULL,
+  `role_code` INT NOT NULL DEFAULT 0,
   `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   UNIQUE KEY `uk_user_username` (`username`)

@@ -42,6 +42,29 @@ public interface FileUrlRepository extends JpaRepository<FileUrlEntity, Long> {
             Pageable pageable
     );
 
+    @Query(
+            value = """
+                    SELECT * FROM file_url f
+                    WHERE (:q IS NULL OR LOWER(CONCAT_WS(' ', COALESCE(f.title,''), COALESCE(f.category,''), COALESCE(f.tags,''), COALESCE(f.original_filename,''))) LIKE LOWER(CONCAT('%', :q, '%')))
+                      AND (:category IS NULL OR LOWER(f.category) = LOWER(:category))
+                      AND (:tag IS NULL OR LOWER(f.tags) LIKE LOWER(CONCAT('%', :tag, '%')))
+                    ORDER BY f.created_at DESC
+                    """,
+            countQuery = """
+                    SELECT COUNT(1) FROM file_url f
+                    WHERE (:q IS NULL OR LOWER(CONCAT_WS(' ', COALESCE(f.title,''), COALESCE(f.category,''), COALESCE(f.tags,''), COALESCE(f.original_filename,''))) LIKE LOWER(CONCAT('%', :q, '%')))
+                      AND (:category IS NULL OR LOWER(f.category) = LOWER(:category))
+                      AND (:tag IS NULL OR LOWER(f.tags) LIKE LOWER(CONCAT('%', :tag, '%')))
+                    """,
+            nativeQuery = true
+    )
+    Page<FileUrlEntity> searchAll(
+            @Param("q") String q,
+            @Param("category") String category,
+            @Param("tag") String tag,
+            Pageable pageable
+    );
+
     void deleteByPhotoId(String photoId);
 
     @Modifying

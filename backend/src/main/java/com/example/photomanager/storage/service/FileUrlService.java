@@ -51,6 +51,12 @@ public class FileUrlService {
         return toPhotoItem(entity);
     }
 
+    public PhotoItem getPhotoById(String photoId) {
+        FileUrlEntity entity = fileUrlRepository.findByPhotoId(photoId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Photo not found"));
+        return toPhotoItem(entity);
+    }
+
     public PagedResponse<PhotoItem> search(String userId,
                                            String q,
                                            String category,
@@ -63,6 +69,34 @@ public class FileUrlService {
 
         Page<FileUrlEntity> result = fileUrlRepository.search(
                 parsedUserId,
+                normalize(q),
+                normalize(category),
+                normalize(tag),
+                PageRequest.of(safePage - 1, safeSize)
+        );
+
+        List<PhotoItem> items = result.getContent().stream()
+                .map(this::toPhotoItem)
+                .collect(Collectors.toList());
+
+        return new PagedResponse<>(
+                items,
+                safePage,
+                safeSize,
+                result.getTotalElements(),
+                result.getTotalPages()
+        );
+    }
+
+    public PagedResponse<PhotoItem> searchAll(String q,
+                                              String category,
+                                              String tag,
+                                              int page,
+                                              int size) {
+        int safePage = Math.max(page, 1);
+        int safeSize = Math.min(Math.max(size, 1), 100);
+
+        Page<FileUrlEntity> result = fileUrlRepository.searchAll(
                 normalize(q),
                 normalize(category),
                 normalize(tag),
