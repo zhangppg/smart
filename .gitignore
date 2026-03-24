@@ -1,0 +1,12 @@
+# Node modules
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# 可选：其他常见的忽略项
+.DS_Store
+dist/
+build/
+.env
+*.log
