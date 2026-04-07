@@ -45,7 +45,9 @@
             placeholder="Type a message..."
             autocomplete="off"
           />
-          <button class="composer-send" type="submit" :disabled="!input">Send</button>
+          <button class="composer-send" type="submit" :disabled="!input || sending">
+            {{ sending ? 'Sending...' : 'Send' }}
+          </button>
           <label class="composer-file">
             <span>Image</span>
             <input type="file" accept="image/*" @change="handleImage" />
@@ -71,6 +73,8 @@
 </template>
 
 <script>
+import { sendChatMessage } from '../services/api'
+
 const THEME_KEY = 'chat_image_theme_dark'
 
 export default {
@@ -81,7 +85,8 @@ export default {
       nextId: 2,
       input: '',
       imageUrl: '',
-      dark: true
+      dark: true,
+      sending: false
     }
   },
   mounted() {
@@ -101,12 +106,34 @@ export default {
       this.dark = !this.dark
       localStorage.setItem(THEME_KEY, this.dark ? '1' : '0')
     },
-    sendMessage() {
+    toast(message, durationMs) {
+      try {
+        window.dispatchEvent(
+          new CustomEvent('app-toast', {
+            detail: { message, durationMs }
+          })
+        )
+      } catch (e) {
+        // noop
+      }
+    },
+    async sendMessage() {
       const text = (this.input || '').trim()
       if (!text) return
+      if (this.sending) return
+
       this.messages.push({ id: this.nextId++, role: 'user', text })
       this.input = ''
       this.$nextTick(this.scrollToBottom)
+
+      this.sending = true
+      try {
+        await sendChatMessage(text)
+      } catch (e) {
+        this.toast('发送失败，请稍后重试', 2200)
+      } finally {
+        this.sending = false
+      }
     },
     handleImage(e) {
       const file = e?.target?.files?.[0]

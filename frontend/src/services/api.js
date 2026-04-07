@@ -131,3 +131,7 @@ export function downloadUrl(id) {
   const token = encodeURIComponent(getToken() || '')
   return `${api.defaults.baseURL}/api/photos/${id}/download?token=${token}`
 }
+
+export function sendChatMessage(text) {
+  return api.post('/api/chat/message', { text })
+}

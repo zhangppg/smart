@@ -10,3 +10,51 @@ dist/
 build/
 .env
 *.log
+
+# Compiled files
+*.class
+*.jar
+*.war
+*.ear
+target/
+build/
+
+# IDE files
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+.settings/
+.project
+.classpath
+.factorypath
+
+# Logs
+logs/
+*.log
+*.log.gz
+
+# Application properties (包含敏感信息)
+application-*.properties
+application-*.yml
+!application-example.properties
+bootstrap-*.properties
+
+# Maven
+.mvn/
+mvnw
+mvnw.cmd
+
+# Gradle
+.gradle/
+gradle-app.setting
+!gradle-wrapper.jar
+gradle-wrapper.properties
+
+# OS files
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
