@@ -3,6 +3,7 @@ import Router from 'vue-router'
 import HomeView from '../views/HomeView.vue'
 import LoginView from '../views/LoginView.vue'
 import PhotosView from '../views/PhotosView.vue'
+import ChatImageView from '../views/ChatImageView.vue'
 import { getRoleCode, getToken } from '../services/api'
 
 Vue.use(Router)
@@ -24,6 +25,12 @@ const router = new Router({
       path: '/photos',
       name: 'photos',
       component: PhotosView,
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/chat',
+      name: 'chat',
+      component: ChatImageView,
       meta: { requiresAuth: true }
     }
   ]

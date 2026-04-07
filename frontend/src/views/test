@@ -1,0 +1,97 @@
+import { useState } from "react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { motion } from "framer-motion";
+
+export default function ChatImageUI() {
+  const [messages, setMessages] = useState([
+    { role: "ai", text: "Hello! Send me an image or message." },
+  ]);
+  const [input, setInput] = useState("");
+  const [image, setImage] = useState(null);
+  const [dark, setDark] = useState(true);
+
+  const sendMessage = () => {
+    if (!input) return;
+    setMessages([...messages, { role: "user", text: input }]);
+    setInput("");
+  };
+
+  const handleImage = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const url = URL.createObjectURL(file);
+      setImage(url);
+      setMessages((prev) => [
+        ...prev,
+        { role: "user", text: "[Image uploaded]" },
+      ]);
+    }
+  };
+
+  return (
+    <div className={dark ? "dark" : ""}>
+      <div className="h-screen w-full grid grid-cols-2 bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 transition-colors">
+        {/* Chat Area */}
+        <div className="flex flex-col p-4 gap-4 border-r border-gray-200 dark:border-gray-800">
+          <div className="flex justify-between items-center">
+            <h1 className="text-xl font-semibold">Chat</h1>
+            <Button variant="outline" onClick={() => setDark(!dark)}>
+              {dark ? "☀️" : "🌙"}
+            </Button>
+          </div>
+
+          <div className="flex-1 overflow-y-auto space-y-3">
+            {messages.map((msg, i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className={`max-w-[70%] p-3 rounded-2xl shadow ${
+                  msg.role === "user"
+                    ? "bg-blue-500 text-white ml-auto"
+                    : "bg-white dark:bg-gray-800"
+                }`}
+              >
+                {msg.text}
+              </motion.div>
+            ))}
+          </div>
+
+          <div className="flex gap-2">
+            <Input
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              placeholder="Type a message..."
+              className="dark:bg-gray-800 dark:border-gray-700"
+            />
+            <Button onClick={sendMessage}>Send</Button>
+            <input type="file" onChange={handleImage} className="text-sm" />
+          </div>
+        </div>
+
+        {/* Image Preview Area */}
+        <div className="p-4">
+          <h1 className="text-xl font-semibold mb-4">Preview</h1>
+
+          <Card className="h-full flex items-center justify-center rounded-2xl shadow-lg bg-white dark:bg-gray-800">
+            <CardContent className="flex items-center justify-center w-full h-full">
+              {image ? (
+                <motion.img
+                  src={image}
+                  alt="preview"
+                  className="max-h-full rounded-xl"
+                  initial={{ scale: 0.9, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                />
+              ) : (
+                <p className="text-gray-400">No image selected</p>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    </div>
+  );
+}

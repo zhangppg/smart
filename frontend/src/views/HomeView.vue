@@ -12,6 +12,7 @@
       <nav class="nav">
         <span v-if="authed" class="user">{{ username }}</span>
         <button v-if="canManage" class="btn btn-ghost" @click="$router.push('/photos')">Manage</button>
+        <button v-if="authed" class="btn btn-ghost" @click="$router.push('/chat')">Chat</button>
         <button v-if="authed" class="btn btn-primary" @click="logout">Logout</button>
         <button v-else class="btn btn-primary" @click="$router.push('/login')">Login</button>
       </nav>
