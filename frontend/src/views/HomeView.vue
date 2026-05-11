@@ -4,27 +4,26 @@
       <div class="brand" @click="$router.push('/')">
         <div class="mark" aria-hidden="true"></div>
         <div class="brand-text">
-          <div class="brand-title">Photo Salon</div>
-          <div class="brand-sub">Works, studies, fragments</div>
+          <div class="brand-title">影像沙龙</div>
+          <div class="brand-sub">作品 · 学习 · 片段</div>
         </div>
       </div>
 
       <nav class="nav">
         <span v-if="authed" class="user">{{ username }}</span>
-        <button v-if="canManage" class="btn btn-ghost" @click="$router.push('/photos')">Manage</button>
-        <button v-if="authed" class="btn btn-ghost" @click="$router.push('/chat')">Chat</button>
-        <button v-if="authed" class="btn btn-primary" @click="logout">Logout</button>
-        <button v-else class="btn btn-primary" @click="$router.push('/login')">Login</button>
+        <button v-if="canManage" class="btn btn-ghost" @click="$router.push('/photos')">管理</button>
+        <button v-if="authed" class="btn btn-ghost" @click="$router.push('/chat')">对话</button>
+        <button v-if="authed" class="btn btn-primary" @click="logout">退出登录</button>
+        <button v-else class="btn btn-primary" @click="$router.push('/login')">登录</button>
       </nav>
     </header>
 
     <main class="main">
       <section class="hero">
         <div class="hero-left">
-          <h1 class="hero-title">A quiet wall for your images.</h1>
+          <h1 class="hero-title">为你的影像，留一面安静的墙。</h1>
           <p class="hero-desc">
-            A gallery-first homepage inspired by artwork walls: clean spacing, generous type, and a soft backdrop that
-            lets photos breathe.
+            以画廊墙为灵感的首页：留白克制，排版舒展，柔和底色让照片自在呼吸。
           </p>
 
           <div v-if="authed" class="search-row">
@@ -32,11 +31,11 @@
               v-model.trim="filters.q"
               class="input"
               type="search"
-              placeholder="Search title, category, tag"
+              placeholder="搜索标题、分类或标签"
               @keydown.enter.prevent="applyFilters"
             />
             <button class="btn btn-primary" :disabled="loading" @click="applyFilters">
-              {{ loading ? 'Searching...' : 'Search' }}
+              {{ loading ? '搜索中…' : '搜索' }}
             </button>
           </div>
 
@@ -45,24 +44,24 @@
               v-model.trim="filters.category"
               class="input input-sm"
               type="text"
-              placeholder="Category"
+              placeholder="分类"
               @keydown.enter.prevent="applyFilters"
             />
             <input
               v-model.trim="filters.tag"
               class="input input-sm"
               type="text"
-              placeholder="Tag"
+              placeholder="标签"
               @keydown.enter.prevent="applyFilters"
             />
-            <button class="btn btn-ghost" :disabled="loading" @click="clearFilters">Reset</button>
+            <button class="btn btn-ghost" :disabled="loading" @click="clearFilters">重置</button>
           </div>
 
           <div v-if="!authed" class="cta">
             <div class="cta-card">
-              <div class="cta-title">Login to view your wall</div>
-              <div class="cta-desc">This page will pull your photos from the backend and render them as a作品墙.</div>
-              <button class="btn btn-primary" @click="$router.push('/login')">Go to Login</button>
+              <div class="cta-title">登录后查看你的作品墙</div>
+              <div class="cta-desc">本页会从后端拉取你的照片，并以作品墙的方式呈现。</div>
+              <button class="btn btn-primary" @click="$router.push('/login')">去登录</button>
             </div>
           </div>
         </div>
@@ -75,7 +74,7 @@
             :class="[`f${t.slot}`, { clickable: !!t.photo }]"
             type="button"
             :disabled="!t.photo"
-            :aria-label="t.photo ? `Open ${t.title}` : 'Thumbnail placeholder'"
+            :aria-label="t.photo ? `打开 ${t.title}` : '缩略图占位'"
             @click="t.photo && openLightbox(t.index)"
           >
             <img
@@ -94,22 +93,22 @@
       <section v-if="authed" class="wall">
         <div class="wall-head">
           <div class="wall-title">
-            <h2>Works</h2>
+            <h2>作品</h2>
             <p>
               {{ totalLabel }}
-              <span v-if="filtersActive" class="muted">• filtered</span>
+              <span v-if="filtersActive" class="muted">• 已筛选</span>
             </p>
           </div>
           <div class="wall-actions">
-            <button class="btn btn-ghost" :disabled="loading" @click="refresh">Refresh</button>
+            <button class="btn btn-ghost" :disabled="loading" @click="refresh">刷新</button>
           </div>
         </div>
 
         <p v-if="error" class="error">{{ error }}</p>
         <p v-if="message" class="message">{{ message }}</p>
 
-        <p v-if="loading && photos.length === 0" class="muted">Loading...</p>
-        <p v-else-if="!loading && photos.length === 0" class="muted">No photos found.</p>
+        <p v-if="loading && photos.length === 0" class="muted">加载中…</p>
+        <p v-else-if="!loading && photos.length === 0" class="muted">暂无照片</p>
 
         <div v-else class="masonry" :style="masonryStyle">
           <article v-for="(photo, idx) in photos" :key="photo.id" class="tile" @click="openLightbox(idx)">
@@ -126,16 +125,16 @@
 
         <div class="pager">
           <button v-if="canLoadMore" class="btn btn-primary" :disabled="loadingMore" @click="loadMore">
-            {{ loadingMore ? 'Loading...' : 'Load more' }}
+            {{ loadingMore ? '加载中…' : '加载更多' }}
           </button>
-          <div v-else class="muted">End of list</div>
+          <div v-else class="muted">已到底</div>
         </div>
       </section>
     </main>
 
     <div v-if="lightbox.open" class="lightbox" @click.self="closeLightbox">
       <div class="lightbox-panel" role="dialog" aria-modal="true">
-        <button class="lb-close" aria-label="Close" @click="closeLightbox">×</button>
+        <button class="lb-close" aria-label="关闭" @click="closeLightbox">×</button>
 
         <div class="lb-body">
           <div class="lb-media">
@@ -145,19 +144,19 @@
               :src="viewUrl(activePhoto.id)"
               :alt="activePhoto.title || activePhoto.originalFilename"
             />
-            <button class="lb-nav prev" aria-label="Previous" @click="prev" :disabled="photos.length <= 1">‹</button>
-            <button class="lb-nav next" aria-label="Next" @click="next" :disabled="photos.length <= 1">›</button>
+            <button class="lb-nav prev" aria-label="上一张" @click="prev" :disabled="photos.length <= 1">‹</button>
+            <button class="lb-nav next" aria-label="下一张" @click="next" :disabled="photos.length <= 1">›</button>
           </div>
 
           <aside class="lb-aside">
             <div class="lb-title">{{ (activePhoto && (activePhoto.title || activePhoto.originalFilename)) || '' }}</div>
             <div class="lb-meta">
               <div v-if="activePhoto && activePhoto.category" class="meta-row">
-                <span class="meta-k">Category</span>
+                <span class="meta-k">分类</span>
                 <span class="meta-v">{{ activePhoto && activePhoto.category }}</span>
               </div>
               <div v-if="activePhoto && (activePhoto.tags || []).length" class="meta-row">
-                <span class="meta-k">Tags</span>
+                <span class="meta-k">标签</span>
                 <span class="meta-v">
                   <span
                     v-for="tag in (activePhoto && activePhoto.tags) || []"
@@ -168,18 +167,18 @@
                 </span>
               </div>
               <div v-if="activePhoto && activePhoto.createdAt" class="meta-row">
-                <span class="meta-k">Created</span>
+                <span class="meta-k">创建时间</span>
                 <span class="meta-v">{{ formatDate(activePhoto && activePhoto.createdAt) }}</span>
               </div>
               <div v-if="activePhoto && activePhoto.size" class="meta-row">
-                <span class="meta-k">Size</span>
+                <span class="meta-k">大小</span>
                 <span class="meta-v">{{ formatSize(activePhoto && activePhoto.size) }}</span>
               </div>
             </div>
 
             <div class="lb-actions">
               <a v-if="activePhoto" class="btn btn-ghost" :href="viewUrl(activePhoto.id)" target="_blank" rel="noopener"
-                >Open</a
+                >打开</a
               >
               <a
                 v-if="activePhoto"
@@ -187,7 +186,7 @@
                 :href="downloadUrl(activePhoto.id)"
                 target="_blank"
                 rel="noopener"
-                >Download</a
+                >下载</a
               >
             </div>
 
@@ -250,8 +249,8 @@ export default {
       return !!(this.filters.q || this.filters.category || this.filters.tag)
     },
     totalLabel() {
-      if (!this.total) return `${this.photos.length} items`
-      return `${this.total} items`
+      if (!this.total) return `${this.photos.length} 张`
+      return `共 ${this.total} 张`
     },
     masonryStyle() {
       // Responsive columns, CSS-only masonry (columns + break-inside).
@@ -265,10 +264,10 @@ export default {
         slot: slots[idx],
         photo: p,
         index: idx,
-        title: p.title || p.originalFilename || 'Photo'
+        title: p.title || p.originalFilename || '照片'
       }))
       while (items.length < 3) {
-        items.push({ slot: slots[items.length], photo: null, index: -1, title: 'Photo' })
+        items.push({ slot: slots[items.length], photo: null, index: -1, title: '照片' })
       }
       return items
     }
@@ -328,7 +327,7 @@ export default {
         this.totalPages = data.totalPages || 1
         this.photos = append ? this.photos.concat(items) : items
       } catch (e) {
-        this.error = e.response?.data?.message || 'Failed to load photos'
+        this.error = e.response?.data?.message || '照片加载失败'
       } finally {
         this.loading = false
         this.loadingMore = false

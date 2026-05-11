@@ -34,23 +34,6 @@
   "createdAt" : "2026-03-12T06:18:52.883419Z"
 }, {
   "recordId" : null,
-  "id" : "b89f2bfc-00fc-4671-b2cc-dfb45e163fe3",
-  "ownerId" : "2",
-  "title" : "1",
-  "category" : "1",
-  "tags" : [ "1" ],
-  "originalFilename" : "29_livephoto.HEIC",
-  "contentType" : "image/jpeg",
-  "size" : 2658115,
-  "storageFilename" : "b89f2bfc-00fc-4671-b2cc-dfb45e163fe3.jpg",
-  "fileUrl" : "/Users/macmini/data/project/photos/smart/backend/data/uploads/photos/b89f2bfc-00fc-4671-b2cc-dfb45e163fe3.jpg",
-  "sourceContentType" : "image/heic",
-  "sourceSize" : 1814326,
-  "sourceStorageFilename" : "b89f2bfc-00fc-4671-b2cc-dfb45e163fe3.heic",
-  "sourceFileUrl" : "/Users/macmini/data/project/photos/smart/backend/data/uploads/photos/b89f2bfc-00fc-4671-b2cc-dfb45e163fe3.heic",
-  "createdAt" : "2026-03-12T13:56:07.856662Z"
-}, {
-  "recordId" : null,
   "id" : "009519dd-89be-4089-aedd-3677488ea21d",
   "ownerId" : "2",
   "title" : "5",
@@ -66,23 +49,6 @@
   "sourceStorageFilename" : "009519dd-89be-4089-aedd-3677488ea21d.heic",
   "sourceFileUrl" : "/Users/macmini/data/project/photos/smart/backend/data/uploads/photos/20260313/009519dd-89be-4089-aedd-3677488ea21d.heic",
   "createdAt" : "2026-03-13T08:14:13.153753Z"
-}, {
-  "recordId" : null,
-  "id" : "34172b94-182a-4b42-bebe-fa7a77c7f3d2",
-  "ownerId" : "2",
-  "title" : "4",
-  "category" : "4",
-  "tags" : [ "4" ],
-  "originalFilename" : "IMG_5380.jpeg",
-  "contentType" : "image/jpeg",
-  "size" : 3815785,
-  "storageFilename" : "34172b94-182a-4b42-bebe-fa7a77c7f3d2.jpeg",
-  "fileUrl" : "/Users/macmini/data/project/photos/smart/backend/data/uploads/photos/34172b94-182a-4b42-bebe-fa7a77c7f3d2.jpeg",
-  "sourceContentType" : null,
-  "sourceSize" : 0,
-  "sourceStorageFilename" : null,
-  "sourceFileUrl" : null,
-  "createdAt" : "2026-03-12T15:45:35.149306Z"
 }, {
   "recordId" : null,
   "id" : "ea99eff6-3a53-4c9f-ae05-4165a4bb319a",
@@ -117,23 +83,6 @@
   "sourceStorageFilename" : "1e95c047-b163-465f-8a25-b79ebc3d1aa7.heic",
   "sourceFileUrl" : "/Users/macmini/data/project/photos/smart/backend/data/uploads/photos/1e95c047-b163-465f-8a25-b79ebc3d1aa7.heic",
   "createdAt" : "2026-03-12T13:34:20.829484Z"
-}, {
-  "recordId" : null,
-  "id" : "4e174a78-6a44-4c3a-a3bf-dce09d256984",
-  "ownerId" : "2",
-  "title" : "3",
-  "category" : "3",
-  "tags" : [ "3" ],
-  "originalFilename" : "312_livephoto.HEIC",
-  "contentType" : "image/jpeg",
-  "size" : 356313,
-  "storageFilename" : "4e174a78-6a44-4c3a-a3bf-dce09d256984.jpg",
-  "fileUrl" : "/Users/macmini/data/project/photos/smart/backend/data/uploads/photos/4e174a78-6a44-4c3a-a3bf-dce09d256984.jpg",
-  "sourceContentType" : "image/heic",
-  "sourceSize" : 222724,
-  "sourceStorageFilename" : "4e174a78-6a44-4c3a-a3bf-dce09d256984.heic",
-  "sourceFileUrl" : "/Users/macmini/data/project/photos/smart/backend/data/uploads/photos/4e174a78-6a44-4c3a-a3bf-dce09d256984.heic",
-  "createdAt" : "2026-03-12T13:56:37.550567Z"
 }, {
   "recordId" : null,
   "id" : "51c062d1-1b69-44dc-8d05-1a9bbb9da7fe",

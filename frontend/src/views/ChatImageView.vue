@@ -7,12 +7,12 @@
           <span>Home</span>
         </button>
         <div class="title-wrap">
-          <h1>Chat</h1>
-          <p>Send a message or upload an image.</p>
+          <h1>对话</h1>
+          <p>输入一段文字，或上传一张图片。</p>
         </div>
       </div>
 
-      <button class="theme-btn" type="button" @click="toggleTheme" :aria-label="dark ? 'Switch to light' : 'Switch to dark'">
+      <button class="theme-btn" type="button" @click="toggleTheme" :aria-label="dark ? '切换为浅色模式' : '切换为深色模式'">
         <span aria-hidden="true">{{ dark ? '☀︎' : '☾' }}</span>
       </button>
     </header>
@@ -20,8 +20,8 @@
     <main class="layout">
       <section class="panel">
         <div class="panel-head">
-          <div class="panel-title">Chat</div>
-          <div class="panel-sub">{{ messages.length }} messages</div>
+          <div class="panel-title">对话</div>
+          <div class="panel-sub">共 {{ messages.length }} 条</div>
         </div>
 
         <div ref="scroller" class="messages" role="log" aria-live="polite">
@@ -42,14 +42,14 @@
             v-model.trim="input"
             class="composer-input"
             type="text"
-            placeholder="Type a message..."
+            placeholder="输入你想说的话…"
             autocomplete="off"
           />
           <button class="composer-send" type="submit" :disabled="!input || sending">
-            {{ sending ? 'Sending...' : 'Send' }}
+            {{ sending ? '发送中…' : '发送' }}
           </button>
           <label class="composer-file">
-            <span>Image</span>
+            <span>上传图片</span>
             <input type="file" accept="image/*" @change="handleImage" />
           </label>
         </form>
@@ -57,15 +57,15 @@
 
       <section class="panel">
         <div class="panel-head">
-          <div class="panel-title">Preview</div>
-          <button v-if="imageUrl" type="button" class="link-btn" @click="clearImage">Clear</button>
+          <div class="panel-title">预览</div>
+          <button v-if="imageUrl" type="button" class="link-btn" @click="clearImage">清空</button>
         </div>
 
         <div class="preview">
           <transition name="preview">
             <img v-if="imageUrl" class="preview-img" :src="imageUrl" alt="preview" />
           </transition>
-          <div v-if="!imageUrl" class="preview-empty">No image selected</div>
+          <div v-if="!imageUrl" class="preview-empty">还没有选择图片</div>
         </div>
       </section>
     </main>
@@ -81,7 +81,7 @@ export default {
   name: 'ChatImageView',
   data() {
     return {
-      messages: [{ id: 1, role: 'ai', text: 'Hello! Send me an image or message.' }],
+      messages: [{ id: 1, role: 'ai', text: '你好！发一段文字，或上传一张图片吧。' }],
       nextId: 2,
       input: '',
       imageUrl: '',
@@ -142,7 +142,7 @@ export default {
 
       this.revokeImageUrl()
       this.imageUrl = URL.createObjectURL(file)
-      this.messages.push({ id: this.nextId++, role: 'user', text: '[Image uploaded]' })
+      this.messages.push({ id: this.nextId++, role: 'user', text: '[已上传图片]' })
       this.$nextTick(this.scrollToBottom)
 
       // allow selecting the same file again

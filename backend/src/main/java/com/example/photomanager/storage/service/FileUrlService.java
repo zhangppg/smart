@@ -116,6 +116,7 @@ public class FileUrlService {
         );
     }
 
+    @Transactional
     public void deleteByPhotoId(String photoId) {
         fileUrlRepository.deleteByPhotoId(photoId);
     }

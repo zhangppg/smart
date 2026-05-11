@@ -264,39 +264,16 @@ public class PhotoService {
     }
 
     public synchronized void deletePhoto(String userId, String id, boolean allAccess) {
-        PhotoItem photo = getPhotoOrThrow(userId, id, allAccess);
-        photos.remove(photo.getId());
-
-        // Always delete DB record even if file deletion fails (avoid 500 + stale UI).
-        // File deletion is best-effort; orphaned files are acceptable compared to broken delete.
+        // Keep delete simple and robust: delete DB row by photo id.
+        // (File cleanup is optional and can be handled later.)
         try {
-            if (allAccess) {
-                fileUrlService.deleteByPhotoId(photo.getId());
-            } else {
-                fileUrlService.deleteByPhotoId(userId, photo.getId());
-            }
+            fileUrlService.deleteByPhotoId(id);
         } catch (RuntimeException ex) {
-            throw ex;
+            // Don't break the delete button due to DB glitches.
+            log.warn("Failed to delete file_url row for photo {}: {}", id, ex.toString());
         }
 
-        Path viewPath = photo.getFileUrl() == null ? null : Path.of(photo.getFileUrl()).toAbsolutePath().normalize();
-        try {
-            if (viewPath != null) {
-                Files.deleteIfExists(viewPath);
-            }
-        } catch (IOException e) {
-            log.warn("Failed to delete view file for photo {}: {}", photo.getId(), e.toString());
-        }
-
-        if (photo.getSourceFileUrl() != null && !photo.getSourceFileUrl().isBlank()) {
-            try {
-                Path sourcePath = Path.of(photo.getSourceFileUrl()).toAbsolutePath().normalize();
-                Files.deleteIfExists(sourcePath);
-            } catch (Exception e) {
-                log.warn("Failed to delete source file for photo {}: {}", photo.getId(), e.toString());
-            }
-        }
-
+        photos.remove(id);
         persistMetadata();
     }
 

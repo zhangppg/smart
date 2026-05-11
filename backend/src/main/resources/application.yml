@@ -31,3 +31,9 @@ photo:
 logging:
   level:
     root: DEBUG
+
+n8n:
+  webhook:
+    # n8n webhook URL for chat messages
+    # Use n8n "Test URL" while the webhook node is listening. For production, use the "Production URL" and activate the workflow.
+    chatMessageUrl: ${N8N_CHAT_MESSAGE_WEBHOOK_URL:http://localhost:5678/webhook-test/api/chat/message}

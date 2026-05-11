@@ -65,7 +65,9 @@ public interface FileUrlRepository extends JpaRepository<FileUrlEntity, Long> {
             Pageable pageable
     );
 
-    void deleteByPhotoId(String photoId);
+    @Modifying
+    @Query("DELETE FROM FileUrlEntity f WHERE f.photoId = :photoId")
+    int deleteByPhotoId(@Param("photoId") String photoId);
 
     @Modifying
     @Query("DELETE FROM FileUrlEntity f WHERE f.photoId = :photoId AND f.userId = :userId")
